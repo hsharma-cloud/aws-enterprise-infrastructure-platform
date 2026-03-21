@@ -397,9 +397,9 @@ resource "aws_launch_template" "app_lt" {
 # ---------------------------
 
 resource "aws_autoscaling_group" "app_asg" {
-  desired_capacity = 2
+  desired_capacity = 1
   max_size         = 2
-  min_size         = 2
+  min_size         = 1
 
   vpc_zone_identifier = [
     aws_subnet.private_app_1.id,
@@ -421,3 +421,221 @@ resource "aws_autoscaling_group" "app_asg" {
     propagate_at_launch = true
   }
 }
+
+# ---------------------------
+# RDS Security Group
+# ---------------------------
+
+resource "aws_security_group" "rds_sg" {
+  name        = "rds-security-group"
+  description = "Allow MySQL from EC2"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ec2_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# ---------------------------
+# DB Subnet Group
+# ---------------------------
+
+resource "aws_db_subnet_group" "db_subnets" {
+  name = "db-subnet-group"
+
+  subnet_ids = [
+    aws_subnet.private_db_1.id,
+    aws_subnet.private_db_2.id
+  ]
+
+  tags = {
+    Name = "db-subnet-group"
+  }
+}
+
+
+# ---------------------------
+# RDS Instance (MySQL)
+# ---------------------------
+
+resource "aws_db_instance" "app_db" {
+  identifier = "enterprise-db"
+
+  engine         = "mysql"
+  engine_version = "8.0"
+  instance_class = "db.t3.micro"
+
+  allocated_storage = 20
+
+  db_name  = "appdb"
+  username = "admin"
+  password = "Password123!"   # (we'll improve later)
+
+  db_subnet_group_name   = aws_db_subnet_group.db_subnets.name
+  vpc_security_group_ids = [aws_security_group.rds_sg.id]
+
+  publicly_accessible = false
+  skip_final_snapshot = true
+}
+
+# ---------------------------
+# S3 Bucket (Secure by Default)
+# ---------------------------
+
+resource "aws_s3_bucket" "app_bucket" {
+  bucket = "enterprise-platform-storage-dev"
+
+  tags = {
+    Name        = "app-storage"
+    Environment = "dev"
+    Project     = "enterprise-platform"
+  }
+}
+
+# Block ALL public access
+resource "aws_s3_bucket_public_access_block" "block" {
+  bucket = aws_s3_bucket.app_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Enable encryption (at rest)
+resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
+  bucket = aws_s3_bucket.app_bucket.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Enable versioning
+resource "aws_s3_bucket_versioning" "versioning" {
+  bucket = aws_s3_bucket.app_bucket.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# ---------------------------
+# S3 Lifecycle (Cost Optimization)
+# ---------------------------
+
+resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
+  bucket = aws_s3_bucket.app_bucket.id
+
+  rule {
+    id     = "cost-optimization"
+    status = "Enabled"
+
+    # Move to cheaper storage after 30 days
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+
+    # Move to archival storage after 60 days
+    transition {
+      days          = 60
+      storage_class = "GLACIER"
+    }
+
+    # Optional: delete objects after 1 year
+    expiration {
+      days = 365
+    }
+  }
+}
+
+
+# ---------------------------
+# EBS Volume (Encrypted)
+# ---------------------------
+
+resource "aws_ebs_volume" "extra" {
+  availability_zone = aws_instance.app_server.availability_zone
+  size              = 10
+  encrypted         = true
+
+  tags = {
+    Name        = "app-ebs-volume"
+    Environment = "dev"
+    Project     = "enterprise-platform"
+  }
+}
+
+resource "aws_volume_attachment" "attach" {
+  device_name = "/dev/xvdf"
+  volume_id   = aws_ebs_volume.extra.id
+  instance_id = aws_instance.app_server.id
+}
+
+
+# ---------------------------
+# EFS File System
+# ---------------------------
+
+resource "aws_efs_file_system" "efs" {
+  encrypted = true
+
+  tags = {
+    Name        = "app-efs"
+    Environment = "dev"
+    Project     = "enterprise-platform"
+  }
+}
+
+# Security Group for EFS
+resource "aws_security_group" "efs_sg" {
+  name   = "efs-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port       = 2049
+    to_port         = 2049
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ec2_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "efs-sg"
+    Environment = "dev"
+    Project     = "enterprise-platform"
+  }
+}
+
+# Mount targets (Multi-AZ)
+resource "aws_efs_mount_target" "mt1" {
+  file_system_id  = aws_efs_file_system.efs.id
+  subnet_id       = aws_subnet.private_app_1.id
+  security_groups = [aws_security_group.efs_sg.id]
+}
+
+resource "aws_efs_mount_target" "mt2" {
+  file_system_id  = aws_efs_file_system.efs.id
+  subnet_id       = aws_subnet.private_app_2.id
+  security_groups = [aws_security_group.efs_sg.id]
+}
+
