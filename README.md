@@ -77,7 +77,47 @@ It follows AWS best practices for:
 
 ---
 
+### 🟦 EC2 Instance (Private Compute)
+![EC2 Instance](screenshots/08-ec2-instance.png)
+
+- Deployed in private subnet  
+- No public IP  
+- Access via SSM  
+
+---
+
+### 🌐 Application Access (ALB)
+![ALB Success](screenshots/09-alb-success.png)
+
+- Public access via ALB DNS  
+- Confirms end-to-end connectivity  
+
+---
+
+### ⚙️ ALB Configuration
+![ALB Details](screenshots/10-alb-details.png)
+
+- Shows DNS endpoint and listener  
+- Confirms correct load balancer setup  
+
+---
+
+### 🔁 Auto Scaling Group (High Availability)
+![ASG](screenshots/11-asg-instances.png)
+
+- Multiple EC2 instances across subnets  
+- Ensures high availability and fault tolerance  
+
+
+
+
+
+
+
+---
+
 ## 🚀 Deployment Steps
+
 
 ```bash
 cd terraform
@@ -85,3 +125,107 @@ terraform init
 terraform validate
 terraform plan
 terraform apply
+
+## 🖥️ Compute Layer
+
+### Overview
+The compute layer is designed to securely run application workloads within private subnets while exposing them to users through a controlled entry point.
+
+---
+
+### Key Components
+
+- **Amazon EC2 (Private Subnet)**
+  - Deployed without public IP
+  - Hosts application (Apache web server)
+  - Isolated from direct internet access
+
+- **AWS Systems Manager (SSM)**
+  - Secure instance access without SSH
+  - Eliminates need for key pairs and open ports
+  - Enables centralized management
+
+- **Application Load Balancer (ALB)**
+  - Public-facing entry point
+  - Distributes traffic to backend EC2 instances
+  - Improves availability and scalability
+
+- **Target Group & Health Checks**
+  - Routes traffic only to healthy instances
+  - Ensures application reliability
+
+- **Security Groups**
+  - ALB: allows HTTP (port 80) from internet
+  - EC2: allows controlled inbound traffic
+  - Enforces least-privilege networking
+
+---
+
+### Traffic Flow
+
+
+---
+
+### Key Features Implemented
+
+- Private compute deployment (no public exposure)
+- Secure access using SSM (no SSH)
+- Automated provisioning using user data
+- Load balancing with health checks
+- Multi-tier architecture (public + private separation)
+- Controlled outbound internet via NAT Gateway
+
+---
+
+### Benefits
+
+- Enhanced security (no direct access to EC2)
+- Scalable architecture (ALB-ready for multiple instances)
+- Production-ready design pattern
+- Fully automated using Terraform
+
+## 🏗️ Architecture Diagram
+
+The following diagram represents the overall architecture of the system, including public and private layers.
+
+👉 Open the editable diagram: `diagrams/aws_architecture.drawio`
+
+---
+
+## 🔄 Request Flow
+
+## 🧱 Architecture Diagram (ASCII)
+
+                🌐 Internet
+                     │
+                     ▼
+        ┌──────────────────────────┐
+        │   Application Load       │
+        │   Balancer (Public)      │
+        └──────────┬───────────────┘
+                   │
+                   ▼
+    ┌──────────────────────────────┐
+    │     EC2 Instance (Private)   │
+    │     Apache Web Server        │
+    └──────────┬───────────────────┘
+               │
+               ▼
+    ┌──────────────────────────────┐
+    │        NAT Gateway           │
+    │   (Outbound Internet Access) │
+    └──────────┬───────────────────┘
+               │
+               ▼
+            🌍 Internet
+
+
+    🔒 VPC: 10.0.0.0/16
+
+    Public Subnets:
+    - ALB
+    - NAT Gateway
+
+    Private Subnets:
+    - EC2 (App Layer)
+    - DB Layer (future)
