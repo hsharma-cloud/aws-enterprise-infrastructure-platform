@@ -1,4 +1,42 @@
-# aws-enterprise-infrastructure-platform
+# AWS Enterprise Infrastructure Platform
+
+## 📌 Project Overview
+
+This project demonstrates the design and implementation of a highly available, secure, and scalable AWS infrastructure using Terraform.
+
+It follows AWS best practices for:
+- Multi-AZ architecture
+- Network segmentation
+- Secure internet access
+- Infrastructure as Code (IaC)
+
+---
+
+## 🏗️ Architecture Summary
+
+- VPC with CIDR `10.0.0.0/16`
+- 2 Availability Zones
+- 6 Subnets:
+  - Public Subnets (ALB / NAT)
+  - Private App Subnets (EC2)
+  - Private DB Subnets (RDS)
+- Internet Gateway for public access
+- NAT Gateway for secure outbound access
+- Route Tables for traffic control
+
+---
+
+## ⚙️ Technologies Used
+
+- AWS VPC
+- AWS EC2 (upcoming)
+- AWS RDS (upcoming)
+- AWS NAT Gateway
+- AWS Internet Gateway
+- Terraform
+
+---
+
 ## 📸 Architecture Overview
 
 ### 🟦 VPC Overview
@@ -17,36 +55,33 @@
 ### 🟨 Internet Gateway
 ![Internet Gateway](screenshots/03-internet-gateway.png)
 
-- Enables public internet access
-- Attached to enterprise VPC
-
 ---
 
 ### 🟧 Public Route Table
 ![Public Route Table](screenshots/04-route-table-public.png)
-
-- Routes internet traffic (0.0.0.0/0 → IGW)
-- Associated with public subnets
 
 ---
 
 ### 🟪 Route Table Associations
 ![Route Associations](screenshots/05-route-table-associations.png)
 
-- Public subnets linked to public route table
-
 ---
 
 ### 🟥 NAT Gateway
 ![NAT Gateway](screenshots/06-nat-gateway.png)
-
-- Enables outbound internet access for private subnets
-- Deployed in public subnet with Elastic IP
 
 ---
 
 ### 🟫 Private Route Table
 ![Private Route Table](screenshots/07-private-route-table.png)
 
-- Routes private traffic through NAT Gateway
-- Associated with application and database subnets
+---
+
+## 🚀 Deployment Steps
+
+```bash
+cd terraform
+terraform init
+terraform validate
+terraform plan
+terraform apply
