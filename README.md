@@ -108,10 +108,38 @@ It follows AWS best practices for:
 - Multiple EC2 instances across subnets  
 - Ensures high availability and fault tolerance  
 
+---
 
+# 🗄️ 3. Database Layer
 
+## RDS Instance (Private DB)
+![RDS](screenshots/12-rds-instance.png)
 
+---
 
+# 💾 4. Storage Layer
+
+## S3 Bucket (Secure Storage)
+![S3](screenshots/13-s3-bucket.png)
+
+## EBS Volume (Block Storage)
+![EBS](screenshots/14-ebs-volume.png)
+
+## EFS (Shared File Storage)
+![EFS](screenshots/15-efs.png)
+
+---
+
+# 💰 5. Cost Optimization (Domain 4)
+
+## S3 Lifecycle Policy
+![S3 Lifecycle](screenshots/16-s3-lifecycle.png)
+
+## Auto Scaling Capacity Optimization
+![ASG Capacity](screenshots/17-asg-capacity.png)
+
+## EBS gp3 Optimization
+![EBS gp3](screenshots/18-ebs-gp3.png)
 
 
 ---
