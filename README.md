@@ -1,5 +1,3 @@
-# AWS Enterprise Infrastructure Platform
-
 # 🏗️ AWS Enterprise Infrastructure Platform
 
 ![Terraform](https://img.shields.io/badge/IaC-Terraform-blue)
