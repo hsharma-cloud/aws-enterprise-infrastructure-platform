@@ -146,13 +146,15 @@ It follows AWS best practices for:
 
 ## 🚀 Deployment Steps
 
-
 ```bash
 cd terraform
 terraform init
 terraform validate
 terraform plan
 terraform apply
+```
+
+---
 
 ## 🖥️ Compute Layer
 
@@ -189,8 +191,11 @@ The compute layer is designed to securely run application workloads within priva
 
 ---
 
-### Traffic Flow
+### 🔄 Traffic Flow
 
+```
+Internet → ALB → EC2 (Private) → NAT Gateway → Internet
+```
 
 ---
 
@@ -212,9 +217,11 @@ The compute layer is designed to securely run application workloads within priva
 - Production-ready design pattern
 - Fully automated using Terraform
 
+---
+
 ## 🏗️ Architecture Diagram
 
-The following diagram represents the overall architecture of the system, including public and private layers.
+The following diagram represents the overall architecture of the system.
 
 👉 Open the editable diagram: `diagrams/aws_architecture.drawio`
 
@@ -222,8 +229,18 @@ The following diagram represents the overall architecture of the system, includi
 
 ## 🔄 Request Flow
 
+1. User sends request from the internet  
+2. Request hits **Application Load Balancer (ALB)**  
+3. ALB forwards traffic to **EC2 in private subnet**  
+4. EC2 processes request (Apache)  
+5. EC2 uses **NAT Gateway** for outbound access  
+6. Response returns via ALB  
+
+---
+
 ## 🧱 Architecture Diagram (ASCII)
 
+```text
                 🌐 Internet
                      │
                      ▼
@@ -257,3 +274,4 @@ The following diagram represents the overall architecture of the system, includi
     Private Subnets:
     - EC2 (App Layer)
     - DB Layer (future)
+```
