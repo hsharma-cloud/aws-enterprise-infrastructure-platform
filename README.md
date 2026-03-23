@@ -1,5 +1,11 @@
 # AWS Enterprise Infrastructure Platform
 
+# 🏗️ AWS Enterprise Infrastructure Platform
+
+![Terraform](https://img.shields.io/badge/IaC-Terraform-blue)
+
+A production-style AWS infrastructure project built using Terraform that demonstrates secure, scalable, and modular cloud architecture.
+
 ## 📌 Project Overview
 
 This project demonstrates the design and implementation of a highly available, secure, and scalable AWS infrastructure using Terraform.
